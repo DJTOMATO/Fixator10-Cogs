@@ -56,7 +56,9 @@ class VocaDB(commands.Cog):
             "User-Agent": f"Red-DiscordBot/{red_version} Fixator10-cogs/VocaDB/{self.__version__}"
         }
         try:
-            async with self.session.get(BASE_API_URL, params=params, headers=headers) as resp:
+            async with self.session.get(
+                BASE_API_URL, params=params, headers=headers
+            ) as resp:
                 if resp.status != 200:
                     return f"https://http.cat/{resp.status}"
                 result = await resp.json()
@@ -123,19 +125,26 @@ class VocaDB(commands.Cog):
         embed.add_field(name="Duration", value=f"{minutes} minutes, {seconds} seconds")
         favorites, score = (data.get("favoritedTimes", 0), data.get("ratingScore", 0))
         embed.add_field(name="Published On", value=pub_date)
-        embed.add_field(name="Statistics", value=f"{favorites} favourite(s), {score} total score")
+        embed.add_field(
+            name="Statistics", value=f"{favorites} favourite(s), {score} total score"
+        )
         embed.add_field(name="Artist(s)", value=all_artists)
         embed.set_footer(text="Powered by VocaDB")
         return embed
 
     @staticmethod
-    def _lyrics_embed(colour, page: Dict[str, Any], data: Dict[str, Any]) -> discord.Embed:
+    def _lyrics_embed(
+        colour, page: Dict[str, Any], data: Dict[str, Any]
+    ) -> discord.Embed:
         """Create an embed with the lyrics"""
+        print("Page:", page)  # Add this debug print
         title = [
             x.get("value")
             for x in data.get("names")
-            if x.get("language") == LANGUAGE_MAP.get(page["cultureCode"])
+            if x.get("language") == LANGUAGE_MAP.get(page.get("translationType"))
         ]
+
+        print("Title:", title)  # Add this debug print
         em = discord.Embed(
             title=title[0] if title else data.get("defaultName"),
             colour=colour,
@@ -143,12 +152,15 @@ class VocaDB(commands.Cog):
         em.set_thumbnail(url=data.get("thumbUrl") or "")
         if data.get("id"):
             em.url = f"https://vocadb.net/S/{data['id']}"
-        em.description = page["value"][:4090] if page.get("value") else "No lyrics found."
+        em.description = (
+            page["value"][:4090] if page.get("value") else "No lyrics found."
+        )
         if page.get("url"):
             em.add_field(
                 name="Source",
                 value=f"[{page.get('source') or 'Source'}]({page['url']})",
             )
+
         return em
 
     @commands.command()
@@ -156,7 +168,7 @@ class VocaDB(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def vocadb(self, ctx: commands.Context, *, query: str):
         """Fetch Vocaloid song lyrics from VocaDB.net database"""
-        await ctx.trigger_typing()
+        await ctx.channel.typing()
         data = await self._fetch_data(ctx, query)
 
         if type(data) == str:
@@ -170,10 +182,12 @@ class VocaDB(commands.Cog):
 
         embeds = []
         for i, page in enumerate(data["lyrics"], start=1):
-            language = f"Language: {LANGUAGE_MAP.get(page.get('cultureCode', 'na'))}"
+            language = f"Language: {page.get('translationType', 'na')}"
             emb = self._lyrics_embed(await ctx.embed_colour(), page, data)
             emb.set_footer(text=f"{language} • Page {i} of {len(data['lyrics'])}")
             embeds.append(emb)
 
-        controls = {"\N{CROSS MARK}": close_menu} if len(embeds) == 1 else DEFAULT_CONTROLS
+        controls = (
+            {"\N{CROSS MARK}": close_menu} if len(embeds) == 1 else DEFAULT_CONTROLS
+        )
         await menu(ctx, embeds, controls=controls, timeout=90.0)
