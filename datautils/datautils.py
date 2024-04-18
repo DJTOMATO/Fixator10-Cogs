@@ -127,12 +127,8 @@ class DataUtils(commands.Cog):
                 em.add_field(
                     name=_("Features"),
                     value="\n".join(_(GUILD_FEATURES.get(f, f)) for f in guild.features).format(
-                        banner=guild.banner
-                        and f" [🔗]({guild.banner_url_as(format='png')})"
-                        or "",
-                        splash=guild.splash
-                        and f" [🔗]({guild.splash_url_as(format='png')})"
-                        or "",
+                        banner=guild.banner and f" [🔗]({guild.banner_url_as(format='png')})" or "",
+                        splash=guild.splash and f" [🔗]({guild.splash_url_as(format='png')})" or "",
                         discovery=getattr(guild, "discovery_splash", None)
                         and f" [🔗]({guild.discovery_splash_url_as(format='png')})"
                         or "",
