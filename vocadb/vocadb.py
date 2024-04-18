@@ -131,14 +131,13 @@ class VocaDB(commands.Cog):
     @staticmethod
     def _lyrics_embed(colour, page: Dict[str, Any], data: Dict[str, Any]) -> discord.Embed:
         """Create an embed with the lyrics"""
-        print("Page:", page)  # Add this debug print
+
         title = [
             x.get("value")
             for x in data.get("names")
             if x.get("language") == LANGUAGE_MAP.get(page.get("translationType"))
         ]
 
-        print("Title:", title)  # Add this debug print
         em = discord.Embed(
             title=title[0] if title else data.get("defaultName"),
             colour=colour,
@@ -160,7 +159,7 @@ class VocaDB(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def vocadb(self, ctx: commands.Context, *, query: str):
         """Fetch Vocaloid song lyrics from VocaDB.net database"""
-        await ctx.channel.typing()
+        await ctx.typing()
         data = await self._fetch_data(ctx, query)
 
         if type(data) == str:
@@ -174,7 +173,7 @@ class VocaDB(commands.Cog):
 
         embeds = []
         for i, page in enumerate(data["lyrics"], start=1):
-            language = f"Language: {page.get('translationType', 'na')}"
+            language = f"Version: {page.get('translationType', 'na')}"
             emb = self._lyrics_embed(await ctx.embed_colour(), page, data)
             emb.set_footer(text=f"{language} • Page {i} of {len(data['lyrics'])}")
             embeds.append(emb)
